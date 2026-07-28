@@ -45,7 +45,7 @@
       "minimum": 0,
       "maximum": 1
     },
-    "pupil_extensions": {
+    "extensions": {
       "type": "object",
       "additionalProperties": true
     }

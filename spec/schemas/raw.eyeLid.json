@@ -38,7 +38,7 @@
       "maximum": 1,
       "description": "Confidence score representing the reliability of the detected eye lid state, where 0 indicates lowest confidence and 1 indicates highest confidence."
     },
-    "blink_extensions": {
+    "extensions": {
       "type": "object",
       "additionalProperties": true
     }

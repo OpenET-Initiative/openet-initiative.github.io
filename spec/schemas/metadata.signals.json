@@ -44,8 +44,8 @@
       "description": "List of column metadata objects describing each column in the data stream.",
       "items": {"$ref": "./metadata.column.json"}
     },
-    "SignalExtensions": {
-      "type": "number",
+    "extensions": {
+      "type": "object",
       "additionalProperties": true
     }
   }

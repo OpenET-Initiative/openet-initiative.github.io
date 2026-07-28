@@ -50,8 +50,8 @@
       "type": "number",
       "description": "Minimum value a column entry is permitted to have."
     },
-    "ColumnExtensions": {
-      "type": "number",
+    "extensions": {
+      "type": "object",
       "additionalProperties": true
     }
   }

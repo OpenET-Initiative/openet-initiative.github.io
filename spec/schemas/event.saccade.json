@@ -19,6 +19,10 @@
     "direction": {
       "type": "number",
       "description": "Angle in degrees"
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
     }
   }
 }

@@ -1,10 +1,9 @@
 openapi: 3.1.0
 info:
   title: OpenET REST APIs
+  version: 0.1.0
   description: >
     This specification defines standardized API paths for accessing eye-tracking data from devices.
-
-  version: 0.1.0
 
 # servers:
 #   - url: http://localhost:8080
@@ -13,11 +12,66 @@ info:
 #     description: Example remote endpoint
 
 paths:
+  /sessions:
+    get:
+      summary: List recording sessions
+      description: Returns session metadata, optionally filtered by device.
+      parameters:
+        - name: deviceId
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: List of sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: schemas/metadata.session.json
+
+  /sessions/{sessionId}:
+    get:
+      summary: Get session metadata
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Session metadata
+          content:
+            application/json:
+              schema:
+                $ref: schemas/metadata.session.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /sessions/{sessionId}/signals:
+    get:
+      summary: Get signal and column configuration for a session
+      description: >
+        Describes which raw/event streams and columns were recorded for this session,
+        enabling clients to know what data to expect before requesting it.
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: Signal configuration
+          content:
+            application/json:
+              schema:
+                $ref: schemas/metadata.signals.json
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /devices:
     get:
       summary: List available eye-tracking devices
-      description: Returns metadata for all connected devices.
+      description: Returns all connected/registered devices.
+      parameters:
+        - $ref: "#/components/parameters/Limit"
       responses:
         "200":
           description: List of devices
@@ -28,4 +82,181 @@ paths:
                 items:
                   $ref: schemas/metadata.hardware.json
 
+  /devices/{deviceId}:
+    get:
+      summary: Get a single device's metadata
+      description: Returns hardware metadata for a specific device.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      responses:
+        "200":
+          description: Device metadata
+          content:
+            application/json:
+              schema:
+                $ref: schemas/metadata.hardware.json
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /devices/{deviceId}/recording/start:
+    post:
+      summary: Start a new recording session on a device
+      description: >
+        Initializes a session for a given device. A device can only have one active
+        recording session at a time.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: schemas/metadata.session.json
+      responses:
+        "201":
+          description: Recording started
+          content:
+            application/json:
+              schema:
+                $ref: schemas/metadata.session.json
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Device already has an active recording session
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Device already has an active recording session"
+
+  /devices/{deviceId}/recording/stop:
+    post:
+      summary: Stop and save the active recording session on a device
+      description: >
+        Finalizes the device's active session, persists all recorded data, and
+        marks it as completed. No further data can be appended afterward.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      responses:
+        "200":
+          description: Session stopped and saved
+          content:
+            application/json:
+              schema:
+                $ref: schemas/metadata.session.json
+        "404":
+          $ref: "#/components/responses/NoActiveSessions"
+          
+
+  /devices/{deviceId}/recording/cancel:
+    post:
+      summary: Cancel the active recording session on a device
+      description: >
+        Terminates the device's active session and discards its data without
+        persisting it. Intended for aborted or invalid recordings.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      responses:
+        "200":
+          description: Session cancelled
+          content:
+            application/json:
+              schema:
+                $ref: schemas/metadata.session.json
+        "404":
+          $ref: "#/components/responses/NoActiveSessions"
+
+  /devices/{deviceId}/recording/event:
+    post:
+      summary: Push an external event/marker into the device's active session
+      description: >
+        Injects a client- or stimulus-driven marker event (e.g. stimulus onset,
+        user response, external trigger) into the timeline of the device's
+        active session. Marker events are authored externally and merged
+        into the session's event stream for later alignment/analysis.
+      parameters:
+        - $ref: "#/components/parameters/DeviceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: schemas/event.marker.json
+      responses:
+        "201":
+          description: Marker event recorded
+          content:
+            application/json:
+              schema:
+                $ref: schemas/event.marker.json
+        "404":
+          $ref: "#/components/responses/NoActiveSessions"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   
+
+components:
+
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of records to return
+      schema:
+        type: integer
+        default: 100
+        minimum: 1
+        maximum: 1000
+
+  responses:
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+
+    BadRequest:
+      description: The request was malformed or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid request body"
+
+    NoActiveSessions:
+      description: Device has no active recording session
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Device has no active recording session"

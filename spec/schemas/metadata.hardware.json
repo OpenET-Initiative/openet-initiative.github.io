@@ -47,7 +47,7 @@
       "type": "string",
       "description": "[NEW] brief description of the supported calibration methods for the hardware."
     },
-    "VendorExtensions": {
+    "extensions": {
       "type": "object",
       "additionalProperties": true
     }

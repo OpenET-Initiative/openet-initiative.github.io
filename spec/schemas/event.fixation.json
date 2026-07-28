@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/spec/schemas/fixation.schema.json",
+  "$id": "https://openet-initiative.github.io/schemas/fixation.schema.json",
   "title": "Fixation",
   "description": "",
   "type": "object",
@@ -27,6 +27,10 @@
     },
     "confidence": {
       "type": "number"
+    },
+    "extensions": {
+      "type": "object",
+      "additionalProperties": true
     }
   }
 }

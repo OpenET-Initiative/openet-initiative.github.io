@@ -2,12 +2,17 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Session",
   "type": "object",
-  "required": ["DeviceSerialNumber"],
+  "required": ["DeviceSerialNumber", "SessionStatus"],
   "properties": {
     "DeviceSerialNumber": {
       "type": "string",
       "description": "Unique identifier for the eye tracking device."
     },    
+    "SessionStatus": {
+      "type": "string",
+      "enum": ["recording", "completed", "canceled"],
+      "description": "Current status of the recording session."
+    },
     "SoftwareVersions": {
       "type": "string",
       "description": "Version of the external software(s) used to operate or communicate with the device.",
@@ -17,6 +22,16 @@
       "type": "integer",
       "description": "Start time in seconds in relation to the start of acquisition of the first data sample in the session (negative values are allowed). This data MAY be specified with sub-second precision using the syntax s[.000000], where s reflects whole seconds, and .000000 reflects optional fractional seconds.",
       "example": -2532
+    },
+    "EndTime": {
+      "type": "integer",
+      "description": "End time in seconds, only if SessionStatus == 'completed' or 'canceled'. This property follows the same conventions as StartTime",
+      "example": 2532
+    },
+    "Duration": {
+      "type": "integer",
+      "description": "Duration of the session that can also be calculated with EndTime-StartTime. For SessionStatus == 'recording' this will be the ongoing duration i.e. current time - StartTime",
+      "example": 2532
     },
     "PhysioType": {
       "const": "eyetrack",
@@ -48,7 +63,7 @@
       "description": "List of metadata objects for each data signal provided by the eye-tracker.",
       "items": {"$ref": "./metadata.signals.json"}
     },
-    "SessionExtensions": {
+    "extensions": {
       "type": "object",
       "additionalProperties": true
     }
